@@ -33,7 +33,7 @@ A Laravel-based server room temperature monitoring system with ThingSpeak and ES
 
 1. Clone Repository
 ```
-git clone https://github.com/Leezha/dashboard-suhu-fix.git
+git clone https://github.com/Leezha/web-dashboard-suhu-ds18b20.git
 cd dashboard-suhu-fix
 ```
 2. Install Dependencies
