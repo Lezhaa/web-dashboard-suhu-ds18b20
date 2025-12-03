@@ -3,10 +3,10 @@
 
 A Laravel-based server room temperature monitoring system with ThingSpeak and ESP32 integration for real-time and scheduled data collection.
 
-<img src="{https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white}" />
-<img src="{https://img.shields.io/badge/ThingSpeak-00A0E3?style=for-the-badge&logo=thingspeak&logoColor=white}" />
-<img src="{https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white}" />
-<img src="{https://img.shields.io/badge/Chart%20js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white}" />
+![image]({https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white})
+![image]({https://img.shields.io/badge/ThingSpeak-00A0E3?style=for-the-badge&logo=thingspeak&logoColor=white})
+![image]({https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white})
+![image]({https://img.shields.io/badge/Chart%20js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white})
 
 ## Features
 
