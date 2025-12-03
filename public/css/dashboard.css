@@ -1,0 +1,469 @@
+/* dashboard.css - WITH REALTIME STYLES */
+
+body { 
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+}
+
+.navbar { 
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    padding: 15px 0; 
+}
+
+.navbar-brand {
+    font-size: 1.3rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+.card { 
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    background: white;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card-header { 
+    border-radius: 15px 15px 0 0 !important;
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    color: white;
+    padding: 18px 25px;
+    border: none;
+}
+
+.card-header.bg-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.card-body {
+    padding: 25px;
+}
+
+/* ============================================
+   REALTIME TEMPERATURE DISPLAY
+   ============================================ */
+.realtime-temp-display {
+    padding: 30px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    color: white;
+    margin-bottom: 15px;
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.realtime-temp-display:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+}
+
+.realtime-temp-display .display-3 {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.realtime-temp-display .text-danger {
+    color: #ff4444 !important;
+    animation: danger-pulse 1s ease-in-out infinite;
+}
+
+.realtime-temp-display .text-success {
+    color: #00ff88 !important;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+@keyframes danger-pulse {
+    0%, 100% { 
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+#last-update {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ============================================
+   FORM STYLING
+   ============================================ */
+.form-label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.15);
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn-primary { 
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); 
+}
+
+.btn-primary:hover { 
+    background: linear-gradient(135deg, #2980b9 0%, #2573a7 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(39, 174, 96, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(231, 76, 60, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    border: none;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    color: white;
+}
+
+/* ============================================
+   TEMPERATURE BADGES
+   ============================================ */
+.temperature-badge { 
+    font-size: 1.4em;
+    padding: 10px 24px;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    font-weight: 700;
+    display: inline-block;
+}
+
+.temperature-badge:hover {
+    transform: scale(1.15) rotate(5deg);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+}
+
+/* ============================================
+   CHART CONTAINER
+   ============================================ */
+.chart-container { 
+    position: relative; 
+    height: 400px; 
+    width: 100%;
+    padding: 15px;
+    background: white;
+    border-radius: 10px; 
+}
+
+/* ============================================
+   TABLE STYLING
+   ============================================ */
+.table-responsive {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+    color: white;
+    font-weight: 600;
+    padding: 15px;
+    border: none;
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #e3f2fd;
+    transform: scale(1.01);
+}
+
+.table tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+.alert { 
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    animation: slideDown 0.3s ease; 
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   PAGINATION
+   ============================================ */
+.pagination-container { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px; 
+}
+
+.page-info { 
+    flex: 1; 
+}
+
+.pagination { 
+    margin: 0; 
+}
+
+.pagination .page-link { 
+    color: #3498db;
+    border-radius: 8px;
+    margin: 0 3px;
+    border: 2px solid #e9ecef;
+    transition: all 0.2s ease; 
+}
+
+.pagination .page-link:hover {
+    background-color: #3498db;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link { 
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    border-color: #3498db;
+    box-shadow: 0 3px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+.loading { 
+    display: none; 
+}
+
+.loading.show { 
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   MODAL STYLING
+   ============================================ */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    border-radius: 15px 15px 0 0;
+    padding: 20px 25px;
+    border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.modal-header.bg-warning { 
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+    color: white;
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.comparison-table { 
+    margin: 15px 0; 
+}
+
+.comparison-table th { 
+    background-color: #f8f9fa; 
+}
+
+.old-value { 
+    color: #e74c3c; 
+    font-weight: bold;
+    font-size: 1.1em; 
+}
+
+.new-value { 
+    color: #27ae60; 
+    font-weight: bold;
+    font-size: 1.1em; 
+}
+
+/* ============================================
+   EXPORT SECTION
+   ============================================ */
+.export-buttons .btn {
+    min-width: 150px;
+    margin: 5px;
+}
+
+/* ============================================
+   SETTINGS PANEL STYLING
+   ============================================ */
+.card-header.bg-warning {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+}
+
+#buzzer-status .badge {
+    font-size: 1rem;
+    padding: 8px 15px;
+}
+
+#buzzer-status p {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .export-buttons .btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .temperature-badge {
+        font-size: 1.1em;
+        padding: 8px 16px;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    .realtime-temp-display {
+        padding: 20px 15px;
+    }
+    
+    .realtime-temp-display .display-3 {
+        font-size: 2.5rem;
+    }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+html {
+    scroll-behavior: smooth;
+}
+
+.empty-chart-message {
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-chart-message h5 {
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.empty-chart-message p {
+    color: #adb5bd;
+    margin: 0;
+}
+
+.d-none {
+    display: none !important;
+}
