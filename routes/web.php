@@ -13,6 +13,9 @@ Route::get('/', [SuhuController::class, 'index']);
 // Form Submit input manual
 Route::post('/suhu', [SuhuController::class, 'store']);
 
+// ThingSpeak Integration
+Route::post('/thingspeak/fetch', [SuhuController::class, 'fetchFromThingSpeak']);
+
 // API Endpoints untuk Dashboard
 Route::get('/api/suhu/today', [SuhuController::class, 'getTodayTemperatures']);
 Route::get('/api/suhu/monthly', [SuhuController::class, 'getTemperatureData']);
