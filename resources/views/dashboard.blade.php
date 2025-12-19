@@ -12,6 +12,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
 
+
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -25,8 +26,41 @@
                 <img src="{{ asset('/img/logo.png') }}" alt="Logo" width="50" height="50" class="me-3">
                 <span>Dashboard Suhu Server</span>
             </a>
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <span>RSUD Waluyo Jati</span>
+            </a>
         </div>
     </nav>
+    <!-- Tambahkan di bawah navbar atau di header -->
+    <div class="container-fluid bg-primary text-white py-2">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <span class="badge bg-warning text-dark me-2">
+                        <i class="bi bi-bell-fill"></i> INFO
+                    </span>
+                </div>
+                <div class="col">
+                    <!-- Running Text Container -->
+                    <div id="running-text-container" class="overflow-hidden">
+                        <div id="running-text" class="d-inline-block">
+                            <!-- Teks akan diisi oleh JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="text-end">
+                        <div id="running-text-date" class="small fw-bold">
+                            <!-- Tanggal akan diupdate oleh JavaScript -->
+                        </div>
+                        <small id="running-text-time" class="text-light">
+                            <!-- Waktu akan diupdate oleh JavaScript -->
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="container mt-4">
 
@@ -86,7 +120,7 @@
                             <div class="mb-3">
                                 <label class="form-label">Suhu (°C)</label>
                                 <input type="number" step="0.1" class="form-control" name="suhu" id="suhu"
-                                    placeholder="Contoh: 22.5" required min="20" max="30">
+                                    placeholder="Contoh: 22.5" required min="15" max="30">
                                 <div class="form-text">Gunakan titik (.) contoh: 22.5</div>
                             </div>
 
@@ -225,10 +259,10 @@
                         </div>
 
                         <!-- Pagination -->
-                        <div class="pagination-container">
+                        <div class="d-flex justify-content-between align-items-center mt-3">
                             <small id="pagination-info" class="text-muted">Memuat...</small>
                             <nav>
-                                <ul class="pagination pagination-sm" id="pagination"></ul>
+                                <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
                             </nav>
                         </div>
                     </div>

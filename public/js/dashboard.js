@@ -13,6 +13,11 @@ let lastRealtimeData = null;
 const csrfMeta = document.querySelector('meta[name="csrf-token"]');
 const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
+// Konfigurasi untuk tabel
+const ITEMS_PER_PAGE = 5;
+let totalTableItems = 0;
+let allTableData = [];
+
 // Plugin untuk background putih pada chart
 const whiteBackgroundPlugin = {
     id: 'custom_canvas_background_color',
@@ -30,6 +35,57 @@ const whiteBackgroundPlugin = {
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
 });
+
+// ============================================
+// RUNNING TEXT / MARQUEE FUNCTION
+// ============================================
+
+function initializeRunningText() {
+    const runningTextEl = document.getElementById('running-text');
+    const timeEl = document.getElementById('running-text-time');
+    const dateEl = document.getElementById('running-text-date');
+    
+    if (!runningTextEl || !timeEl) return;
+    
+    // Cuma 1 pesan, tapi update suhu live
+    const mainMessage = "🎉 SELAMAT DATANG DI DASHBOARD MONITORING SUHU RUANG SERVER";
+    
+    // Update running text
+    function updateRunningText() {
+        const now = new Date();
+        const realtimeEl = document.getElementById('realtime-temp');
+        const currentTemp = realtimeEl ? realtimeEl.textContent : '-- °C';
+        
+        // Update teks dengan suhu
+        runningTextEl.textContent = `${mainMessage} | 🌡️ SUHU TERKINI: ${currentTemp}`;
+
+
+        // Update TANGGAL dengan format Indonesia
+        const optionsDate = { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        };
+        dateEl.textContent = now.toLocaleDateString('id-ID', optionsDate);
+        
+        // Update WAKTU live
+        timeEl.textContent = now.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+    
+    // Update pertama kali
+    updateRunningText();
+    
+    // Update setiap 2 detik (supaya suhu selalu update)
+    setInterval(updateRunningText, 2000);
+    
+    // Jangan pause, biar kocak terus jalan
+    // runningTextEl.style.animationPlayState = 'running';
+}
 
 function initializeApp() {
     const today = new Date();
@@ -52,6 +108,8 @@ function initializeApp() {
 
     // Start realtime monitoring
     startRealtimeMonitoring();
+
+    initializeRunningText();
 
     const suhuForm = document.getElementById('suhuForm');
     if (suhuForm) suhuForm.addEventListener('submit', handleFormSubmit);
@@ -231,8 +289,8 @@ async function handleFormSubmit(e) {
         suhu: parseFloat(suhuValue)
     };
 
-    if (isNaN(formData.suhu) || formData.suhu < 20 || formData.suhu > 30) {
-        showError('Suhu harus berupa angka antara 20.0 - 30.0°C');
+    if (isNaN(formData.suhu) || formData.suhu < 15 || formData.suhu > 30) {
+        showError('Suhu harus berupa angka antara 15.0 - 30.0°C');
         if (loading) loading.classList.remove('show');
         if (submitBtn) submitBtn.disabled = false;
         return;
@@ -260,31 +318,87 @@ async function handleFormSubmit(e) {
 }
 
 async function submitTemperatureData(formData, forceUpdate = false) {
-    const payload = { ...formData };
+    // Ambil token SEGAR dari meta tag setiap kali submit
+    const freshCsrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    console.log('Fresh CSRF Token:', freshCsrfToken);
+    
+    if (!freshCsrfToken) {
+        console.error('CSRF Token not found in meta tag!');
+        return {
+            success: false,
+            message: 'CSRF token tidak ditemukan. Refresh halaman.'
+        };
+    }
+
+    const payload = { 
+        ...formData,
+        _token: freshCsrfToken  // Tambahkan _token di body juga
+    };
+    
     if (forceUpdate) {
         payload.force_update = true;
     }
+
+    console.log('📤 Sending POST to /suhu with payload:', payload);
+    console.log('Headers:', {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': freshCsrfToken,
+        'Accept': 'application/json'
+    });
 
     try {
         const response = await fetch('/suhu', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
-                'Accept': 'application/json'
+                'X-CSRF-TOKEN': freshCsrfToken,  // PASTIKAN ini ada
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            credentials: 'include'  // INI PENTING! untuk mengirim cookie session
         });
 
-        // try to parse json safely
+        console.log('📥 Response status:', response.status, response.statusText);
+        console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
+
+        // Jika 419, coba ambil response text untuk debug
+        if (response.status === 419) {
+            const errorText = await response.text();
+            console.error('419 Error Response:', errorText);
+            
+            // Coba parse untuk pesan error
+            try {
+                const errorJson = JSON.parse(errorText);
+                return {
+                    success: false,
+                    message: errorJson.message || 'CSRF Token Mismatch',
+                    status: 419
+                };
+            } catch {
+                return {
+                    success: false,
+                    message: `CSRF Token Mismatch: ${errorText.substring(0, 100)}`,
+                    status: 419
+                };
+            }
+        }
+
         const text = await response.text();
+        console.log('Response text:', text);
+        
         try {
             return JSON.parse(text || '{}');
         } catch (err) {
-            return { success: response.ok, message: text || (response.ok ? 'OK' : 'Request failed') };
+            console.warn('JSON parse error:', err);
+            return { 
+                success: response.ok, 
+                message: text || 'Request failed with status ' + response.status,
+                status: response.status
+            };
         }
     } catch (err) {
-        console.error('submitTemperatureData fetch error:', err);
+        console.error('Network error:', err);
         throw err;
     }
 }
@@ -451,8 +565,17 @@ async function loadMonthlyData() {
         if (titleEl) titleEl.textContent = `${getMonthName(currentMonth)} ${currentYear}`;
 
         updateChart(data.chartLabels || [], data.chartData || []);
-        displayTableData(data.tableData || []);
-        updatePagination(data.totalItems || 0, data.currentPage || 1, data.perPage || 10);
+        
+        // Simpan semua data tabel untuk pagination
+        allTableData = data.tableData || [];
+        totalTableItems = allTableData.length;
+        
+        // Urutkan data dari tanggal terbaru ke terlama
+        allTableData.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+        
+        // Tampilkan hanya 5 data pertama (halaman 1)
+        displayPaginatedTableData();
+        updatePaginationControls();
 
     } catch (error) {
         console.error('Error loading monthly data:', error);
@@ -464,16 +587,23 @@ async function loadMonthlyData() {
     }
 }
 
-function displayTableData(tableData) {
+function displayPaginatedTableData() {
     const tbody = document.getElementById('monthly-data');
     if (!tbody) return;
 
-    if (!tableData || tableData.length === 0) {
+    if (!allTableData || allTableData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center">Tidak ada data untuk bulan ini</td></tr>';
         return;
     }
 
-    const tableRowsHTML = tableData.map(row => `
+    // Hitung indeks data untuk halaman saat ini
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalTableItems);
+    
+    // Ambil data untuk halaman saat ini
+    const currentPageData = allTableData.slice(startIndex, endIndex);
+
+    const tableRowsHTML = currentPageData.map(row => `
         <tr>
             <td>${row.tanggal}</td>
             <td>${row.pagi}</td>
@@ -486,69 +616,92 @@ function displayTableData(tableData) {
     tbody.innerHTML = tableRowsHTML;
 }
 
-function updatePagination(totalItems, currentPageNum, perPage) {
-    currentPage = currentPageNum;
-    const pagination = document.getElementById('pagination');
+function updatePaginationControls() {
     const paginationInfo = document.getElementById('pagination-info');
-    if (!pagination || !paginationInfo) return;
+    const pagination = document.getElementById('pagination');
+    
+    if (!paginationInfo || !pagination) return;
 
-    if (!totalItems || totalItems === 0) {
+    if (totalTableItems === 0) {
         paginationInfo.textContent = 'Tidak ada data';
         pagination.innerHTML = '';
         return;
     }
 
-    const totalPages = Math.ceil(totalItems / perPage);
-    const startItem = (currentPage - 1) * perPage + 1;
-    const endItem = Math.min(currentPage * perPage, totalItems);
-    paginationInfo.textContent = `Menampilkan ${startItem}-${endItem} dari ${totalItems} data`;
+    // Hitung total halaman
+    const totalPages = Math.ceil(totalTableItems / ITEMS_PER_PAGE);
+    
+    // Update info pagination
+    const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalTableItems);
+    paginationInfo.textContent = `Menampilkan ${startItem}-${endItem} dari ${totalTableItems} data`;
 
+    // Buat tombol pagination
     let paginationHTML = '';
-
-    paginationHTML += `
-        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">‹</a>
-        </li>
-    `;
-
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, currentPage + 2);
-
-    if (startPage > 1) {
-        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`;
-        if (startPage > 2) {
-            paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-        }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
+    
+    // Tombol Sebelumnya
+    if (currentPage > 1) {
         paginationHTML += `
-            <li class="page-item ${i === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+            <li class="page-item">
+                <button class="page-link" onclick="changePage(${currentPage - 1})" aria-label="Sebelumnya">
+                    &laquo; Sebelumnya
+                </button>
+            </li>
+        `;
+    } else {
+        paginationHTML += `
+            <li class="page-item disabled">
+                <button class="page-link" disabled aria-label="Sebelumnya">
+                    &laquo; Sebelumnya
+                </button>
             </li>
         `;
     }
-
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-        }
-        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
-    }
-
+    
+    // Informasi halaman saat ini
     paginationHTML += `
-        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">›</a>
+        <li class="page-item disabled">
+            <span class="page-link">Halaman ${currentPage}/${totalPages}</span>
         </li>
     `;
-
+    
+    // Tombol Selanjutnya
+    if (currentPage < totalPages) {
+        paginationHTML += `
+            <li class="page-item">
+                <button class="page-link" onclick="changePage(${currentPage + 1})" aria-label="Selanjutnya">
+                    Selanjutnya &raquo;
+                </button>
+            </li>
+        `;
+    } else {
+        paginationHTML += `
+            <li class="page-item disabled">
+                <button class="page-link" disabled aria-label="Selanjutnya">
+                    Selanjutnya &raquo;
+                </button>
+            </li>
+        `;
+    }
+    
     pagination.innerHTML = paginationHTML;
 }
 
 function changePage(page) {
-    if (!page || page < 1) return;
+    if (page < 1) return;
+    
+    const totalPages = Math.ceil(totalTableItems / ITEMS_PER_PAGE);
+    if (page > totalPages) return;
+    
     currentPage = page;
-    loadMonthlyData();
+    displayPaginatedTableData();
+    updatePaginationControls();
+    
+    // Scroll ke atas tabel untuk UX yang lebih baik
+    const tableElement = document.querySelector('.table-responsive');
+    if (tableElement) {
+        tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 
@@ -611,6 +764,32 @@ function updateChart(labels, data) {
         // Determine number of ticks based on data length
         let maxTicksLimit = (labels && labels.length) ? Math.min(labels.length, 31) : 7;
 
+        let minTemp = 15;
+        if (validData.length > 0) {
+            const dataMin = Math.min(...validData);
+            const dataMax = Math.max(...validData);
+            
+            console.log(`Data range: ${dataMin.toFixed(1)}°C - ${dataMax.toFixed(1)}°C`);
+            
+            // Untuk data rendah (di bawah 25°C)
+            if (dataMax < 25) {
+                minTemp = Math.floor(dataMin) - 1;
+                minTemp = Math.max(15, minTemp);  // Minimal 15°C
+            }
+            // Untuk data tinggi (di atas 25°C)
+            else if (dataMin > 25) {
+                minTemp = 25;  // Mulai dari 25°C
+            }
+            // Data campuran
+            else {
+                minTemp = Math.floor(dataMin) - 1;
+                minTemp = Math.max(15, minTemp);
+            }
+            
+            // Pastikan tidak terlalu dekat dengan max (30)
+            minTemp = Math.min(minTemp, 28);
+        }
+
         const config = {
             type: 'line',
             plugins: [whiteBackgroundPlugin],
@@ -644,7 +823,7 @@ function updateChart(labels, data) {
                 },
                 scales: {
                     y: {
-                        min: 20,      // batas bawah suhu
+                        min: minTemp,      // batas bawah suhu
                         max: 30,
                         ticks: {
                             stepSize: 0.5,
@@ -923,7 +1102,6 @@ function downloadChartAsPDF() {
 // ============================================
 
 // Pastikan fungsi ini bisa diakses dari HTML
-window.refreshRealtimeData = refreshRealtimeData;
 window.changePage = changePage;
 window.exportData = exportData;
 window.downloadChartAsPDF = downloadChartAsPDF;

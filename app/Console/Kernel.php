@@ -13,15 +13,45 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        // PRODUCTION - jam sebenarnya
-        $schedule->command('suhu:fetch-auto')->dailyAt('08:00')->timezone('Asia/Jakarta');
-        $schedule->command('suhu:fetch-auto')->dailyAt('12:00')->timezone('Asia/Jakarta');
-        $schedule->command('suhu:fetch-auto')->dailyAt('20:00')->timezone('Asia/Jakarta');
-
-        // DEVELOPMENT - jam testing (beda dari production)
-        if (app()->environment('local')) {
-            $schedule->command('suhu:fetch-auto')->everyMinute();
-        }
+        // PRODUCTION: Jalankan di jam-jam tertentu
+        $schedule->command('suhu:fetch-auto')
+            ->dailyAt('08:00')
+            ->timezone('Asia/Jakarta')
+            ->before(function () {
+                \Log::info('🔔 Scheduler triggered at 08:00');
+            })
+            ->onSuccess(function () {
+                \Log::info('✅ 08:00 fetch completed');
+            })
+            ->onFailure(function () {
+                \Log::error('❌ 08:00 fetch failed');
+            });
+        
+        $schedule->command('suhu:fetch-auto')
+            ->dailyAt('12:00')
+            ->timezone('Asia/Jakarta')
+            ->before(function () {
+                \Log::info('🔔 Scheduler triggered at 12:00');
+            })
+            ->onSuccess(function () {
+                \Log::info('✅ 12:00 fetch completed');
+            })
+            ->onFailure(function () {
+                \Log::error('❌ 12:00 fetch failed');
+            });
+        
+        $schedule->command('suhu:fetch-auto')
+            ->dailyAt('20:00')
+            ->timezone('Asia/Jakarta')
+            ->before(function () {
+                \Log::info('🔔 Scheduler triggered at 20:00');
+            })
+            ->onSuccess(function () {
+                \Log::info('✅ 20:00 fetch completed');
+            })
+            ->onFailure(function () {
+                \Log::error('❌ 20:00 fetch failed');
+            });
     }
 
     protected function commands()

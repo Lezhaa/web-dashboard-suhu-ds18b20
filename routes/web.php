@@ -3,23 +3,21 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SuhuController;
 
-/*
- Web Routes
-*/
-
 // Dashboard
-Route::get('/', [SuhuController::class, 'index']);
+Route::get('/', [SuhuController::class, 'index'])->name('dashboard');
 
-// Form Submit input manual
-Route::post('/suhu', [SuhuController::class, 'store']);
+// Store data - POST ONLY dengan CSRF
+Route::post('/suhu', [SuhuController::class, 'store'])->name('suhu.store');
 
-// ThingSpeak Integration
-Route::post('/thingspeak/fetch', [SuhuController::class, 'fetchFromThingSpeak']);
+// Redirect jika ada yang akses GET ke /suhu
+Route::get('/suhu', function() {
+    return redirect('/')->with('error', 'Gunakan form untuk input data!');
+});
 
-// API Endpoints untuk Dashboard
+// API routes
 Route::get('/api/suhu/today', [SuhuController::class, 'getTodayTemperatures']);
 Route::get('/api/suhu/monthly', [SuhuController::class, 'getTemperatureData']);
 Route::get('/api/suhu/realtime', [SuhuController::class, 'getRealtimeSuhu']);
 
-// Export Excel
+// Export
 Route::get('/export/excel', [SuhuController::class, 'exportExcel']);

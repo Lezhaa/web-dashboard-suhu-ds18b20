@@ -1,14 +1,21 @@
 @echo off
-cd /d "C:\xampp\htdocs\suhu-dashboard"
+title Laravel Dashboard Auto Starter
 
-:: Start Server with PHP 8.4
-start "Server" cmd /k "C:\php8\php.exe artisan serve --host=192.168.0.16 --port=8000"
+set PHP_PATH=C:\xampp\php\php.exe
+set PROJECT_PATH=C:\xampp\htdocs\web-dashboard-suhu-ds18b20
+set LARAVEL_HOST=192.168.0.74
+set LARAVEL_PORT=8000
 
-:: Start Scheduler (after 3 seconds) with PHP 8.4
-timeout /t 3 >nul
-start "Scheduler" cmd /k "cd /d C:\xampp\htdocs\suhu-dashboard && C:\php8\php.exe artisan schedule:run"
+cd /d "%PROJECT_PATH%"
 
-echo Dashboard started at http://192.168.0.16:8000
-echo Scheduler running...
-echo.
+REM 1. Start Laravel Server
+start "Laravel Server" cmd /k "%PHP_PATH% artisan serve --host=%LARAVEL_HOST% --port=%LARAVEL_PORT%"
+
+REM 2. Start Scheduler Worker (INI YANG PENTING)
+start "Laravel Scheduler" cmd /k "%PHP_PATH% artisan schedule:work"
+
+REM 3. Log
+echo [%time%] Laravel Dashboard started >> "%PROJECT_PATH%\startup.log"
+
+REM Keep open
 pause

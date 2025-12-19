@@ -27,8 +27,8 @@ class SuhuController extends Controller
      */
     public function getRealtimeSuhu()
     {
-        $channelId = '3172452';
-        $readApiKey = 'VFE0XCVARIEHBGDS';
+        $channelId = '3194368';
+        $readApiKey = 'TH0B1YOM36EQQ01P';
         $url = "https://api.thingspeak.com/channels/{$channelId}/feeds/last.json?api_key={$readApiKey}";
 
         try {
@@ -89,7 +89,7 @@ class SuhuController extends Controller
             $validated = $request->validate([
                 'tanggal' => 'required|date|before_or_equal:today',
                 'waktu'   => 'required|in:pagi,siang,malam',
-                'suhu'    => 'required|numeric|between:20.0,30.0',
+                'suhu'    => 'required|numeric|between:15.0,30.0',
                 'force_update' => 'sometimes|boolean'
             ]);
 

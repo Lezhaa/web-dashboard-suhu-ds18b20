@@ -22,6 +22,114 @@ body {
     transform: scale(1.05);
 }
 
+/* ============================================
+   RUNNING TEXT - KUNING ELEGAN
+   ============================================ */
+
+   #running-text-container {
+    height: 32px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+}
+
+#running-text {
+    position: absolute;
+    white-space: nowrap;
+    animation: marquee 25s linear infinite;
+    padding-left: 100%;
+    font-weight: 700;
+    color: #000000;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+    line-height: 32px;
+}
+
+#running-text-time {
+    color: #000000;
+    font-weight: 700;
+    padding: 4px 12px;
+    font-size: 0.9rem;
+}
+
+/* Pause animation on hover */
+#running-text-container:hover #running-text {
+    animation-play-state: paused;
+    color: #B22222;
+    text-shadow: 0 0 10px #FF4500;
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+/* Flash animation for attention */
+@keyframes flash-border {
+    0%, 100% {
+        border-bottom-color: #FF8C00;
+    }
+    50% {
+        border-bottom-color: #FF4500;
+    }
+}
+
+#running-text-container {
+    animation: flash-border 3s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    #running-text {
+        font-size: 1.1rem;
+        animation: marquee 20s linear infinite;
+    }
+    #running-text-container {
+        height: 28px;
+    }
+}
+
+@media (max-width: 768px) {
+    #running-text {
+        font-size: 1rem;
+        animation: marquee 15s linear infinite;
+        line-height: 28px;
+    }
+    #running-text-container {
+        height: 28px;
+    }
+    #running-text-time {
+        font-size: 0.8rem;
+        padding: 3px 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    #running-text {
+        font-size: 0.9rem;
+        animation: marquee 12s linear infinite;
+        line-height: 26px;
+    }
+    #running-text-container {
+        height: 26px;
+    }
+    #running-text-date {
+        line-height: 1;
+        margin-bottom: 2px;
+    }
+    
+    #running-text-time {
+        line-height: 1;
+        opacity: 0.9;
+    }
+}
+
 .card { 
     border-radius: 15px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
