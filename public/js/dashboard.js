@@ -1,4 +1,4 @@
-// dashboard.js (fixed)
+// dashboard.js (FIXED FINAL VERSION)
 // Global variables
 let currentChart = null;
 let currentMonth = new Date().getMonth() + 1;
@@ -8,10 +8,6 @@ let pendingFormData = null;
 let currentChartData = null;
 let realtimeInterval = null;
 let lastRealtimeData = null;
-
-// CSRF Token setup (safely)
-const csrfMeta = document.querySelector('meta[name="csrf-token"]');
-const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
 // Konfigurasi untuk tabel
 const ITEMS_PER_PAGE = 5;
@@ -31,6 +27,12 @@ const whiteBackgroundPlugin = {
     }
 };
 
+// Helper untuk mendapatkan CSRF token
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
@@ -47,20 +49,15 @@ function initializeRunningText() {
     
     if (!runningTextEl || !timeEl) return;
     
-    // Cuma 1 pesan, tapi update suhu live
     const mainMessage = "🎉 SELAMAT DATANG DI DASHBOARD MONITORING SUHU RUANG SERVER";
     
-    // Update running text
     function updateRunningText() {
         const now = new Date();
         const realtimeEl = document.getElementById('realtime-temp');
         const currentTemp = realtimeEl ? realtimeEl.textContent : '-- °C';
         
-        // Update teks dengan suhu
         runningTextEl.textContent = `${mainMessage} | 🌡️ SUHU TERKINI: ${currentTemp}`;
 
-
-        // Update TANGGAL dengan format Indonesia
         const optionsDate = { 
             weekday: 'short', 
             year: 'numeric', 
@@ -69,7 +66,6 @@ function initializeRunningText() {
         };
         dateEl.textContent = now.toLocaleDateString('id-ID', optionsDate);
         
-        // Update WAKTU live
         timeEl.textContent = now.toLocaleTimeString('id-ID', {
             hour: '2-digit',
             minute: '2-digit',
@@ -77,14 +73,8 @@ function initializeRunningText() {
         });
     }
     
-    // Update pertama kali
     updateRunningText();
-    
-    // Update setiap 2 detik (supaya suhu selalu update)
     setInterval(updateRunningText, 2000);
-    
-    // Jangan pause, biar kocak terus jalan
-    // runningTextEl.style.animationPlayState = 'running';
 }
 
 function initializeApp() {
@@ -102,13 +92,9 @@ function initializeApp() {
     const filterYearEl = document.getElementById('filterYear');
     if (filterYearEl) filterYearEl.value = currentYear;
 
-    // Load data awal
     loadTodayTemperatures();
     loadMonthlyData();
-
-    // Start realtime monitoring
     startRealtimeMonitoring();
-
     initializeRunningText();
 
     const suhuForm = document.getElementById('suhuForm');
@@ -123,10 +109,7 @@ function initializeApp() {
 
 // Realtime Suhu Monitoring
 function startRealtimeMonitoring() {
-    // Load immediately
     fetchRealtimeFromThingspeak();
-
-    // Then every 40 seconds from Thingspeak
     if (realtimeInterval) clearInterval(realtimeInterval);
     realtimeInterval = setInterval(fetchRealtimeFromThingspeak, 40000);
 }
@@ -135,12 +118,12 @@ async function fetchRealtimeFromThingspeak() {
     console.log('Mengambil data dari ThingSpeak...');
 
     try {
+        // FIX: Gunakan endpoint yang benar
         const resp = await fetch('/api/suhu/realtime', {
             method: 'GET',
             headers: { 
                 'Accept': 'application/json',
-                'Cache-Control': 'no-cache',
-                'Content-Type': 'application/json'
+                'Cache-Control': 'no-cache'
             }
         });
 
@@ -154,8 +137,6 @@ async function fetchRealtimeFromThingspeak() {
         }
 
         const data = await resp.json();
-
-        // Debug log untuk melihat response
         console.log('ThingSpeak Response:', data);
         
         if (data && data.success) {
@@ -165,8 +146,7 @@ async function fetchRealtimeFromThingspeak() {
             if (data.suhu !== null && data.suhu !== undefined) {
                 suhuFormatted = `${parseFloat(data.suhu).toFixed(1)}°C`;
             
-            // Update timestamp dari ThingSpeak
-            if (data.timestamp) {
+                if (data.timestamp) {
                     const waktu = new Date(data.timestamp);
                     timestampText = `Update: ${waktu.toLocaleTimeString('id-ID', { 
                         hour: '2-digit', 
@@ -200,14 +180,11 @@ function updateRealtimeDisplay(temperature, message = null) {
         return;
     }
 
-    // Update suhu
     realtimeEl.textContent = temperature || '-- °C';
     
-    // Update message
     if (message) {
         lastUpdateEl.textContent = message;
         
-        // Warna badge berdasarkan status
         if (message.includes('Gagal') || message.includes('error') || message.includes('Error')) {
             lastUpdateEl.className = 'badge bg-danger';
         } else if (temperature === '-- °C') {
@@ -318,8 +295,7 @@ async function handleFormSubmit(e) {
 }
 
 async function submitTemperatureData(formData, forceUpdate = false) {
-    // Ambil token SEGAR dari meta tag setiap kali submit
-    const freshCsrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    const freshCsrfToken = getCsrfToken();
     console.log('Fresh CSRF Token:', freshCsrfToken);
     
     if (!freshCsrfToken) {
@@ -332,7 +308,7 @@ async function submitTemperatureData(formData, forceUpdate = false) {
 
     const payload = { 
         ...formData,
-        _token: freshCsrfToken  // Tambahkan _token di body juga
+        _token: freshCsrfToken
     };
     
     if (forceUpdate) {
@@ -340,34 +316,26 @@ async function submitTemperatureData(formData, forceUpdate = false) {
     }
 
     console.log('📤 Sending POST to /suhu with payload:', payload);
-    console.log('Headers:', {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': freshCsrfToken,
-        'Accept': 'application/json'
-    });
 
     try {
         const response = await fetch('/suhu', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': freshCsrfToken,  // PASTIKAN ini ada
+                'X-CSRF-TOKEN': freshCsrfToken,
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify(payload),
-            credentials: 'include'  // INI PENTING! untuk mengirim cookie session
+            credentials: 'include'
         });
 
         console.log('📥 Response status:', response.status, response.statusText);
-        console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
 
-        // Jika 419, coba ambil response text untuk debug
         if (response.status === 419) {
             const errorText = await response.text();
             console.error('419 Error Response:', errorText);
             
-            // Coba parse untuk pesan error
             try {
                 const errorJson = JSON.parse(errorText);
                 return {
@@ -410,7 +378,6 @@ function showConfirmationModal(duplicateResult) {
         suhu: parseFloat((document.getElementById('suhu')?.value ?? '').replace(',', '.'))
     };
 
-    // guard DOM
     const dupTanggalEl = document.getElementById('dup-tanggal');
     const dupWaktuEl = document.getElementById('dup-waktu');
     const dupSuhuLamaEl = document.getElementById('dup-suhu-lama');
@@ -428,7 +395,6 @@ function showConfirmationModal(duplicateResult) {
         const modal = new bootstrap.Modal(modalEl);
         modal.show();
     } else {
-        // fallback: auto-confirm
         handleConfirmUpdate();
     }
 }
@@ -480,6 +446,8 @@ function resetForm() {
 
 async function refreshData() {
     currentPage = 1;
+    allTableData = [];
+    totalTableItems = 0;
     await loadTodayTemperatures();
     await loadMonthlyData();
 }
@@ -501,7 +469,6 @@ function handleError(result) {
     }
 }
 
-
 // ============================================
 // DATA LOADING FUNCTIONS
 // ============================================
@@ -511,11 +478,15 @@ function handleFilterSubmit(e) {
     const fy = document.getElementById('filterYear');
     if (fm) currentMonth = parseInt(fm.value) || currentMonth;
     if (fy) currentYear = parseInt(fy.value) || currentYear;
+    
+    // FIX: Reset pagination data
     currentPage = 1;
+    allTableData = [];
+    totalTableItems = 0;
+    
     loadMonthlyData();
 }
 
-// Data Loading 
 async function loadTodayTemperatures() {
     try {
         const response = await fetch('/api/suhu/today');
@@ -564,7 +535,25 @@ async function loadMonthlyData() {
         const titleEl = document.getElementById('month-year-title');
         if (titleEl) titleEl.textContent = `${getMonthName(currentMonth)} ${currentYear}`;
 
-        updateChart(data.chartLabels || [], data.chartData || []);
+        // FIX: Pastikan data ada sebelum update chart
+        if (data.chartData && data.chartData.length > 0) {
+            updateChart(data.chartLabels || [], data.chartData || []);
+        } else {
+            console.log('Tidak ada data chart untuk bulan ini');
+            const canvasElement = document.getElementById('suhuChart');
+            const chartContainer = canvasElement ? canvasElement.parentNode : null;
+            
+            if (chartContainer) {
+                canvasElement.style.display = 'none';
+                let emptyMessage = chartContainer.querySelector('.empty-chart-message');
+                if (!emptyMessage) {
+                    emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'empty-chart-message text-center p-5 text-muted';
+                    emptyMessage.innerHTML = '<h5>Tidak ada data suhu untuk bulan ini</h5><p>Silakan input data suhu terlebih dahulu</p>';
+                    chartContainer.appendChild(emptyMessage);
+                }
+            }
+        }
         
         // Simpan semua data tabel untuk pagination
         allTableData = data.tableData || [];
@@ -573,7 +562,6 @@ async function loadMonthlyData() {
         // Urutkan data dari tanggal terbaru ke terlama
         allTableData.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
         
-        // Tampilkan hanya 5 data pertama (halaman 1)
         displayPaginatedTableData();
         updatePaginationControls();
 
@@ -596,11 +584,8 @@ function displayPaginatedTableData() {
         return;
     }
 
-    // Hitung indeks data untuk halaman saat ini
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalTableItems);
-    
-    // Ambil data untuk halaman saat ini
     const currentPageData = allTableData.slice(startIndex, endIndex);
 
     const tableRowsHTML = currentPageData.map(row => `
@@ -628,15 +613,11 @@ function updatePaginationControls() {
         return;
     }
 
-    // Hitung total halaman
     const totalPages = Math.ceil(totalTableItems / ITEMS_PER_PAGE);
-    
-    // Update info pagination
     const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
     const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalTableItems);
     paginationInfo.textContent = `Menampilkan ${startItem}-${endItem} dari ${totalTableItems} data`;
 
-    // Buat tombol pagination
     let paginationHTML = '';
     
     // Tombol Sebelumnya
@@ -697,13 +678,11 @@ function changePage(page) {
     displayPaginatedTableData();
     updatePaginationControls();
     
-    // Scroll ke atas tabel untuk UX yang lebih baik
     const tableElement = document.querySelector('.table-responsive');
     if (tableElement) {
         tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
-
 
 // ============================================
 // CHART FUNCTIONS
@@ -738,7 +717,8 @@ function updateChart(labels, data) {
         return isNaN(n) ? null : n;
     });
 
-    const validData = normalizedData.filter(item => item !== null && item !== undefined);
+    // FIX: Filter hanya data valid (bukan null/undefined)
+    const validData = normalizedData.filter(item => item !== null && item !== undefined && item > 0);
 
     if (!data || validData.length === 0) {
         canvasElement.style.display = 'none';
@@ -761,34 +741,26 @@ function updateChart(labels, data) {
     canvasElement.style.display = 'block';
 
     try {
-        // Determine number of ticks based on data length
         let maxTicksLimit = (labels && labels.length) ? Math.min(labels.length, 31) : 7;
 
-        let minTemp = 15;
-        if (validData.length > 0) {
-            const dataMin = Math.min(...validData);
-            const dataMax = Math.max(...validData);
-            
-            console.log(`Data range: ${dataMin.toFixed(1)}°C - ${dataMax.toFixed(1)}°C`);
-            
-            // Untuk data rendah (di bawah 25°C)
-            if (dataMax < 25) {
-                minTemp = Math.floor(dataMin) - 1;
-                minTemp = Math.max(15, minTemp);  // Minimal 15°C
-            }
-            // Untuk data tinggi (di atas 25°C)
-            else if (dataMin > 25) {
-                minTemp = 25;  // Mulai dari 25°C
-            }
-            // Data campuran
-            else {
-                minTemp = Math.floor(dataMin) - 1;
-                minTemp = Math.max(15, minTemp);
-            }
-            
-            // Pastikan tidak terlalu dekat dengan max (30)
-            minTemp = Math.min(minTemp, 28);
+        // FIX: Hitung min dan max yang benar
+        let dataMin = Math.min(...validData);
+        let dataMax = Math.max(...validData);
+        
+        console.log(`Data range: ${dataMin.toFixed(1)}°C - ${dataMax.toFixed(1)}°C`);
+        
+        // Tentukan min untuk chart (tetap 15°C minimum)
+        let chartMin = 15;
+        
+        // Jika dataMin lebih kecil dari 15, gunakan dataMin dikurangi 0.5
+        if (dataMin < 15) {
+            chartMin = Math.floor(dataMin * 2) / 2; // Round ke 0.5 terdekat
+            if (chartMin > dataMin) chartMin -= 0.5;
+            chartMin = Math.max(10, chartMin); // Minimal 10°C untuk safety
         }
+        
+        // Pastikan chartMin tidak lebih dari 28
+        chartMin = Math.min(chartMin, 28);
 
         const config = {
             type: 'line',
@@ -823,13 +795,21 @@ function updateChart(labels, data) {
                 },
                 scales: {
                     y: {
-                        min: minTemp,      // batas bawah suhu
+                        min: 15, // FIX: Selalu mulai dari 15
                         max: 30,
                         ticks: {
-                            stepSize: 0.5,
+                            stepSize: 0.5, // FIX: Step 0.5
+                            // FIX: Generate ticks dari 15 sampai 30 dengan step 0.5
                             callback: function (value) {
+                                // Hanya tampilkan nilai dengan 1 desimal
                                 return value.toFixed(1) + '°C';
-                            }
+                            },
+                            // FIX: Atur ticks secara eksplisit
+                            min: 15,
+                            max: 30,
+                            stepSize: 0.5,
+                            // Buat array ticks dari 15 sampai 30 step 0.5
+                            count: 31 // (30-15)/0.5 + 1 = 31 ticks
                         },
                         title: {
                             display: true,
@@ -839,7 +819,15 @@ function updateChart(labels, data) {
                                 weight: 'bold'
                             }
                         },
-                        grid: { color: 'rgba(0,0,0,0.1)' }
+                        grid: { 
+                            color: 'rgba(0,0,0,0.1)',
+                            // FIX: Tampilkan grid untuk setiap 0.5
+                            drawBorder: true
+                        },
+                        // FIX: Atur batas secara eksplisit
+                        beginAtZero: false,
+                        suggestedMin: 15,
+                        suggestedMax: 30
                     },
                     x: {
                         title: {
@@ -899,6 +887,12 @@ function updateChart(labels, data) {
         currentChart = new Chart(canvasElement, config);
 
         setTimeout(() => {
+            if (currentChart) {
+                currentChart.options.scales.y.min = 15;
+                currentChart.options.scales.y.max = 30;
+                currentChart.options.scales.y.ticks.stepSize = 0.5;
+                currentChart.update();
+            }
             ensureChartWhiteBackground();
         }, 100);
 
@@ -907,7 +901,6 @@ function updateChart(labels, data) {
         showError('Gagal membuat grafik: ' + error.message);
     }
 }
-
 
 // ============================================
 // EXPORT FUNCTIONS
@@ -928,12 +921,10 @@ async function exportData(format) {
                 exportBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Downloading...';
             }
 
-            // navigate to download endpoint
             window.location.href = `/export/excel?month=${month}&year=${year}`;
 
             showSuccess('File Excel sedang diunduh...');
 
-            // re-enable after a short delay (UI nicety)
             setTimeout(() => {
                 if (exportBtn) {
                     exportBtn.disabled = false;
@@ -954,10 +945,28 @@ async function exportData(format) {
     }
 }
 
-// Chart to PDF Export
+// Chart to PDF Export 
 function downloadChartAsPDF() {
-    if (!currentChart) {
-        showError('Tidak ada chart untuk diekspor');
+    const canvas = document.getElementById('suhuChart');
+    
+    // Cek lebih komprehensif
+    if (!canvas) {
+        showError('Canvas chart tidak ditemukan');
+        return;
+    }
+    
+    // Cek apakah chart ada dan memiliki data
+    if (!currentChart || !currentChart.data || !currentChart.data.datasets || currentChart.data.datasets.length === 0) {
+        showError('Tidak ada data chart untuk diekspor');
+        return;
+    }
+    
+    // Cek apakah ada data valid
+    const chartData = currentChart.data.datasets[0].data;
+    const validData = (chartData || []).filter(value => value !== null && value !== undefined).map(Number).filter(n => !isNaN(n));
+    
+    if (validData.length === 0) {
+        showError('Tidak ada data suhu yang valid untuk diekspor');
         return;
     }
 
@@ -969,9 +978,6 @@ function downloadChartAsPDF() {
             exportBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating PDF...';
             exportBtn.disabled = true;
         }
-
-        const canvas = document.getElementById('suhuChart');
-        if (!canvas) throw new Error('Canvas chart tidak ditemukan');
 
         const chartImageData = canvas.toDataURL('image/png', 1.0);
 
@@ -1009,7 +1015,7 @@ function downloadChartAsPDF() {
         // Chart section
         const chartStartY = margin + 23;
         const availableWidth = pageWidth - (2 * margin);
-        const chartHeight = 95;
+        const chartHeight = 120;
 
         const canvasRatio = canvas.width / canvas.height;
         let imageWidth = availableWidth;
@@ -1026,14 +1032,21 @@ function downloadChartAsPDF() {
         pdf.addImage(chartImageData, 'PNG', imageX, chartStartY, imageWidth, imageHeight, '', 'FAST');
 
         // Statistic section
-        const statsStartY = chartStartY + imageHeight + 8;
+        const statsStartY = chartStartY + imageHeight + 12;
 
-        const chartData = currentChart.data.datasets[0].data;
-        const validData = (chartData || []).filter(value => value !== null && value !== undefined).map(Number).filter(n => !isNaN(n));
-
+        // Gunakan validData yang sudah dihitung
         if (validData.length > 0) {
             const maxTemp = Math.max(...validData);
-            const minTemp = Math.min(...validData);
+            // Cari min yang bukan 0 atau mendekati 0
+            let minTemp = Math.min(...validData);
+            
+            // Jika minTemp adalah 0 atau sangat kecil, cari yang terendah selain itu
+            if (minTemp < 10) {
+                const nonZeroData = validData.filter(temp => temp >= 15); // Ambil yang >= 15°C
+                if (nonZeroData.length > 0) {
+                    minTemp = Math.min(...nonZeroData);
+                }
+            }
             const avgTemp = (validData.reduce((sum, val) => sum + val, 0) / validData.length);
 
             // Statistics section - centered
@@ -1095,7 +1108,6 @@ function downloadChartAsPDF() {
         }
     }
 }
-
 
 // ============================================
 // GLOBAL FUNCTIONS untuk HTML onclick

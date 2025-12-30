@@ -4,7 +4,7 @@ title Laravel Dashboard Auto Starter
 set PHP_PATH=C:\xampp\php\php.exe
 set PROJECT_PATH=C:\xampp\htdocs\web-dashboard-suhu-ds18b20
 set LARAVEL_HOST=192.168.0.74
-set LARAVEL_PORT=8000
+set LARAVEL_PORT=8001
 
 cd /d "%PROJECT_PATH%"
 
