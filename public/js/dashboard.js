@@ -90,7 +90,25 @@ function initializeApp() {
     if (filterMonthEl) filterMonthEl.value = currentMonth;
 
     const filterYearEl = document.getElementById('filterYear');
-    if (filterYearEl) filterYearEl.value = currentYear;
+    if (filterYearEl) {
+        // FIX: GENERATE OPTION TAHUN SECARA DINAMIS
+        const startYear = 2025; // Tahun awal yang ingin ditampilkan
+        const endYear = currentYear + 1; // Tambah 1 tahun ke depan
+        
+        // Kosongkan dulu
+        filterYearEl.innerHTML = '';
+        
+        // Tambahkan opsi tahun dari startYear sampai endYear
+        for (let year = startYear; year <= endYear; year++) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            filterYearEl.appendChild(option);
+        }
+        
+        // Set nilai default ke tahun saat ini
+        filterYearEl.value = currentYear;
+    }
 
     loadTodayTemperatures();
     loadMonthlyData();
