@@ -16,7 +16,7 @@ let allTableData = [];
 
 // Plugin untuk background putih pada chart
 const whiteBackgroundPlugin = {
-    id: 'custom_canvas_background_color',
+    id: 'white_bg',
     beforeDraw: (chart) => {
         const { ctx } = chart;
         ctx.save();
@@ -37,45 +37,6 @@ function getCsrfToken() {
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
 });
-
-// ============================================
-// RUNNING TEXT / MARQUEE FUNCTION
-// ============================================
-
-function initializeRunningText() {
-    const runningTextEl = document.getElementById('running-text');
-    const timeEl = document.getElementById('running-text-time');
-    const dateEl = document.getElementById('running-text-date');
-    
-    if (!runningTextEl || !timeEl) return;
-    
-    const mainMessage = "🎉 SELAMAT DATANG DI DASHBOARD MONITORING SUHU RUANG SERVER";
-    
-    function updateRunningText() {
-        const now = new Date();
-        const realtimeEl = document.getElementById('realtime-temp');
-        const currentTemp = realtimeEl ? realtimeEl.textContent : '-- °C';
-        
-        runningTextEl.textContent = `${mainMessage} | 🌡️ SUHU TERKINI: ${currentTemp}`;
-
-        const optionsDate = { 
-            weekday: 'short', 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        };
-        dateEl.textContent = now.toLocaleDateString('id-ID', optionsDate);
-        
-        timeEl.textContent = now.toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    }
-    
-    updateRunningText();
-    setInterval(updateRunningText, 2000);
-}
 
 function initializeApp() {
     const today = new Date();
@@ -125,67 +86,69 @@ function initializeApp() {
     if (confirmBtn) confirmBtn.addEventListener('click', handleConfirmUpdate);
 }
 
-// Realtime Suhu Monitoring
-function startRealtimeMonitoring() {
-    fetchRealtimeFromThingspeak();
-    if (realtimeInterval) clearInterval(realtimeInterval);
-    realtimeInterval = setInterval(fetchRealtimeFromThingspeak, 40000);
+
+// ============================================
+// RUNNING TEXT / MARQUEE FUNCTION
+// ============================================
+
+function initializeRunningText() {
+    const runningTextEl = document.getElementById('running-text');
+    const timeEl = document.getElementById('running-text-time');
+    const dateEl = document.getElementById('running-text-date');
+    
+    if (!runningTextEl || !timeEl) return;
+    
+    const mainMessage = "🎉 SELAMAT DATANG DI DASHBOARD MONITORING SUHU RUANG SERVER";
+    
+    function updateRunningText() {
+        const now = new Date();
+        const realtimeEl = document.getElementById('realtime-temp');
+        const currentTemp = realtimeEl ? realtimeEl.textContent : '-- °C';
+        
+        runningTextEl.textContent = `${mainMessage} | 🌡️ SUHU TERKINI: ${currentTemp}`;
+
+        const optionsDate = { 
+            weekday: 'short', 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        };
+        dateEl.textContent = now.toLocaleDateString('id-ID', optionsDate);
+        
+        timeEl.textContent = now.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+    
+    updateRunningText();
+    setInterval(updateRunningText, 2000);
 }
 
-async function fetchRealtimeFromThingspeak() {
-    console.log('Mengambil data dari ThingSpeak...');
 
+// Realtime Suhu Monitoring
+function startRealtimeMonitoring() {
+    fetchRealtimeFromFirebase();
+    if (realtimeInterval) clearInterval(realtimeInterval);
+    realtimeInterval = setInterval(fetchRealtimeFromFirebase, 40000);
+}
+
+
+async function fetchRealtimeFromFirebase() {
     try {
-        // FIX: Gunakan endpoint yang benar
-        const resp = await fetch('/api/suhu/realtime', {
-            method: 'GET',
-            headers: { 
-                'Accept': 'application/json',
-                'Cache-Control': 'no-cache'
-            }
-        });
-
-        console.log('Response status:', resp.status);
-        console.log('Response ok:', resp.ok);
-
-        if (!resp.ok) {
-            console.warn('Gagal mengambil data dari ThingSpeak. Status:', resp.status);
-            updateRealtimeDisplay(null, 'error', 'Gagal mengambil data');
-            return;
-        }
+        const resp = await fetch('/api/suhu/realtime', { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
         const data = await resp.json();
-        console.log('ThingSpeak Response:', data);
-        
-        if (data && data.success) {
-            let suhuFormatted = '-- °C';
-            let timestampText = 'Belum ada data';
-            
-            if (data.suhu !== null && data.suhu !== undefined) {
-                suhuFormatted = `${parseFloat(data.suhu).toFixed(1)}°C`;
-            
-                if (data.timestamp) {
-                    const waktu = new Date(data.timestamp);
-                    timestampText = `Update: ${waktu.toLocaleTimeString('id-ID', { 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        second: '2-digit' 
-                    })}`;
-                } else if (data.waktu && data.tanggal) {
-                    timestampText = `${data.waktu} | ${data.tanggal}`;
-                }
-            }
-            
-            console.log(`Suhu realtime: ${suhuFormatted}`);
-            updateRealtimeDisplay(suhuFormatted, timestampText);
-            
-        } else {
-            console.warn('ThingSpeak error:', data?.message || 'Data tidak valid');
-            updateRealtimeDisplay('-- °C', data?.message || 'Data tidak valid');
-        }
-    } catch (err) {
-        console.error('Error fetchRealtimeFromThingSpeak:', err);
-        updateRealtimeDisplay('-- °C', 'Koneksi error: ' + err.message);
+        if (!data.success) throw new Error('Invalid data');
+
+        const suhu = data.suhu !== null ? `${parseFloat(data.suhu).toFixed(1)}°C` : '-- °C';
+        const waktu = data.waktu && data.tanggal ? `${data.waktu} | ${data.tanggal}` : 'Realtime Firebase';
+
+        updateRealtimeDisplay(suhu, waktu);
+    } catch {
+        updateRealtimeDisplay('-- °C', 'Koneksi Firebase error');
     }
 }
 
@@ -508,11 +471,6 @@ function handleFilterSubmit(e) {
 async function loadTodayTemperatures() {
     try {
         const response = await fetch('/api/suhu/today');
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
         const data = await response.json();
 
         ['pagi', 'siang', 'malam'].forEach(waktu => {

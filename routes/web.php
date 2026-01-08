@@ -17,7 +17,7 @@ Route::get('/suhu', function() {
 // API routes
 Route::get('/api/suhu/today', [SuhuController::class, 'getTodayTemperatures']);
 Route::get('/api/suhu/monthly', [SuhuController::class, 'getTemperatureData']);
-Route::get('/api/suhu/realtime', [SuhuController::class, 'getRealtimeSuhu']);
+Route::get('/api/suhu/realtime', [SuhuController::class, 'getRealtimeSuhuFirebase']);
 
 // Export
 Route::get('/export/excel', [SuhuController::class, 'exportExcel']);

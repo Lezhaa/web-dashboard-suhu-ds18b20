@@ -35,11 +35,8 @@ return [
         ],
     ],
 
-    'thingspeak' => [
-        'api_key' => env('THINGSPEAK_API_KEY'),
-        'read_api_key' => env('THINGSPEAK_READ_API_KEY', env('THINGSPEAK_API_KEY')),
-        'channel_id' => env('THINGSPEAK_CHANNEL_ID'),
-        'field_id' => env('THINGSPEAK_FIELD_ID', 'field1'),
+    'firebase' => [
+        'database_url' => env('FIREBASE_DATABASE_URL'),
     ],
 
 ];

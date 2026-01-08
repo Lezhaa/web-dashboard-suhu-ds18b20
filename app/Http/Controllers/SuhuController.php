@@ -25,57 +25,62 @@ class SuhuController extends Controller
      * SUHU REAL-TIME DARI THINGSPEAK
      * ============================================
      */
-    public function getRealtimeSuhu()
-    {
-        $channelId = '3194368';
-        $readApiKey = 'TH0B1YOM36EQQ01P';
-        $url = "https://api.thingspeak.com/channels/{$channelId}/feeds/last.json?api_key={$readApiKey}";
+    public function getRealtimeSuhuFirebase()
+{
+    try {
+        $firebaseUrl = rtrim(config('services.firebase.database_url'), '/');
+        $deviceId = 'Suhu';
 
-        try {
-            // Gunakan curl langsung dengan SSL verify false
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); // Disable SSL
+        // 🔥 PATH YANG BENAR
+        $url = "{$firebaseUrl}/devices/{$deviceId}.json";
 
-            $response = curl_exec($ch);
-            $error = curl_error($ch);
-            curl_close($ch);
+        $response = Http::timeout(10)->get($url);
 
-            if ($error) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'CURL Error: ' . $error
-                ]);
-            }
-
-            $data = json_decode($response, true);
-
-            if (isset($data['field1'])) {
-                return response()->json([
-                    'success' => true,
-                    'suhu' => round((float)$data['field1'], 1),
-                    'timestamp' => $data['created_at'] ?? now()->toDateTimeString(),
-                    'waktu' => Carbon::parse($data['created_at'] ?? now())->format('H:i:s'),
-                    'tanggal' => Carbon::parse($data['created_at'] ?? now())->format('d-m-Y'),
-                    'unit' => '°C',
-                    'source' => 'ThingSpeak'
-                ]);
-            }
-
+        if (!$response->ok()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Data tidak ditemukan di ThingSpeak'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Exception: ' . $e->getMessage()
-            ]);
+                'message' => 'Gagal koneksi ke Firebase'
+            ], 500);
         }
+
+        $data = $response->json();
+
+        if (!$data || !isset($data['temperature'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data suhu kosong'
+            ], 404);
+        }
+
+        // Jika belum ada timestamp → pakai waktu sekarang
+        if (isset($data['timestamp'])) {
+            $timestamp = Carbon::createFromTimestamp($data['timestamp'])
+                ->setTimezone('Asia/Jakarta');
+        } else {
+            $timestamp = now();
+        }
+
+        return response()->json([
+            'success' => true,
+            'suhu' => number_format((float)$data['temperature'], 1),
+            'unit' => '°C',
+            'waktu' => $timestamp->format('H:i:s'),
+            'tanggal' => $timestamp->format('d-m-Y'),
+            'timestamp' => $timestamp->toDateTimeString(),
+            'source' => 'Firebase'
+        ]);
+
+    } catch (\Throwable $e) {
+        Log::error('Firebase error: '.$e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Exception Firebase'
+        ], 500);
     }
+}
+
+
 
 
     /**
